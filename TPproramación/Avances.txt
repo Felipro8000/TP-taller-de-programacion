@@ -1,0 +1,5 @@
+Cosas Hechas
+Añadir definición de colas y pilas
+Cosas a Hacer
+Crear nueva forma de simulación
+Terminar TP

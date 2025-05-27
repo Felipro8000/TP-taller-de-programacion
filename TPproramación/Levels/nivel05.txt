@@ -1,0 +1,12 @@
+Ancho: 5
+Alto: 5
+Cantidad de enemigos: 12
+Vida inicial: 6
+Cantidad de torres: 3
+Distancia de ataque: 2
+Largo camino: 9
+CCVBB
+VCVBB
+VCVBB
+VCVVV
+VCCCC

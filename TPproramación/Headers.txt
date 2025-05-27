@@ -1,0 +1,38 @@
+archivo.h
+Funcion:
+procesar fila
+
+estrategia.h
+Funcion:
+disponer (Estrategia default)
+disponer con backtraking
+disponer custom
+
+mapa.h
+Estructura
+Mapa
+Funcion:
+mostrar mapa
+liberar mapa
+limpiar pantalla
+
+nivel.h
+Estructura de:
+Cordenadas
+Enemigos
+Camino
+Nivel
+Funciones:
+Iniciar Nivel
+Mostrar Nivel
+Mostrar Enemigos
+Liberar Nivel
+
+simulador.h
+nada?
+
+turno.h
+Funcion:
+simular turno
+buscarEnemigo
+inicializar turno
