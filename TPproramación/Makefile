@@ -3,8 +3,8 @@ CFLAGS   := -Wall -g
 BIN      := tower_defense
 LFLAGS   := -lm
 
-SRC      := simulador.c archivo.c estrategia.c mapa.c nivel.c turno.c
-DEPS     := archivo.h mapa.h nivel.h simulador.h estrategia.h turno.h
+SRC      := simulador.c archivo.c estrategia.c mapa.c nivel.c turno.c pilasycolas.c
+DEPS     := archivo.h mapa.h nivel.h simulador.h estrategia.h turno.h pilasycolas.h
 OBJ      := $(SRC:.c=.o)
 
 all: $(BIN)
