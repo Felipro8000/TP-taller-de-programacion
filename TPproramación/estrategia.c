@@ -30,7 +30,7 @@ int count_caminos(int posicion_x, int posicion_y, Mapa *mapa){
             int y = posicion_y + rango_y;
 
             // Verificar que la casilla esté dentro del mapa
-            if (x >= 0 && x < mapa->alto && y >= 0 && y < mapa->ancho && mapa->casillas[x][y] == CAMINO)
+            if (x >= 0 && x < mapa->ancho && y >= 0 && y < mapa->alto && mapa->casillas[x][y] == CAMINO)
                     cantidad_caminos++;
         }
     }
@@ -90,6 +90,59 @@ void quicksort(Torre torres[], int bajo, int alto) {
     }
 }
 
+void disponer_con_backtracking(Nivel* nivel, Mapa* mapa) {
+    int cantidad_casillas = mapa->alto * mapa->ancho;
+    Coordenada casillas[cantidad_casillas];
+    // Obtener todas las posiciones válidas para torres
+    int cant_posiciones_validas = posiciones_validas(casillas, mapa->casillas, mapa->alto, mapa->ancho);
+
+    Torre torres[cant_posiciones_validas];
+    caminos_torre(casillas, cant_posiciones_validas, mapa, torres);
+
+    // Pila para almacenar combinaciones de torres
+    Stack pila;
+    inicializarPila(&pila);
+
+    int indices[mapa->cant_torres];
+    for (int i = 0; i < mapa->cant_torres; i++)
+        indices[i] = i;
+
+    int encontrada = 0;
+    int tope = 0;
+
+    while (!encontrada) {
+        // Apilar la combinación actual
+        apilarPila(&pila, indices);
+
+        // Calcular el daño total de la combinación actual
+        int total_golpes_realizados = 0;
+        for (int i = 0; i < mapa->cant_torres; i++)
+            total_golpes_realizados += torres[indices[i]].enemigos_golpeados;
+
+        if (total_golpes_realizados >= nivel->enemigos->vida_inicial) {
+            // Encontrada una combinación válida
+            for (int i = 0; i < mapa->cant_torres; i++) {
+                int x = torres[indices[i]].posicion.x;
+                int y = torres[indices[i]].posicion.y;
+                colocar_torre(mapa, x, y, i);
+            }
+            encontrada = 1;
+        } else {
+            // Backtracking: probar siguiente combinación
+            int k = mapa->cant_torres - 1;
+            while (k >= 0 && indices[k] == cant_posiciones_validas - mapa->cant_torres + k)
+                k--;
+            if (k < 0)
+                break; // No hay más combinaciones
+            indices[k]++;
+            for (int j = k + 1; j < mapa->cant_torres; j++)
+                indices[j] = indices[j - 1] + 1;
+        }
+    }
+    destruirPilaSinFuncion(&pila);
+
+}
+
 void disponer(Nivel* nivel, Mapa* mapa) {
 
     int cantidad_casillas = mapa->alto * mapa->ancho;
@@ -131,8 +184,4 @@ void disponer_custom(Nivel* nivel, Mapa* mapa) {
         int nueva_torre_y = torres[i].posicion.y;
         colocar_torre(mapa, nueva_torre_x, nueva_torre_y, i);
     }
-}
-
-void disponer_con_backtracking(Nivel* nivel, Mapa* mapa) {
-
 }
