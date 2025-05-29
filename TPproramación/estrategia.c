@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include "pilasycolas.h"
 
-static int posiciones_validas(Coordenada *validas, TipoCasilla **casillas, int alto, int ancho) {
+static int posiciones_validas(Coordenada *casilla, TipoCasilla **casillas, int alto, int ancho) {
     int cant_posiciones_validas = 0;
 
     for (int i = 0; i < alto; i++) {
         for (int j = 0; j < ancho; j++) {
             if (casillas[i][j] == VACIO) {
-                validas[cant_posiciones_validas].x = i;
-                validas[cant_posiciones_validas].y = j;
+                casilla[cant_posiciones_validas].x = i;
+                casilla[cant_posiciones_validas].y = j;
                 cant_posiciones_validas++;
             }
         }
@@ -20,53 +20,28 @@ static int posiciones_validas(Coordenada *validas, TipoCasilla **casillas, int a
     return cant_posiciones_validas;
 }
 
-int count_caminos(Coordenada posicion, , Mapa *mapa){
-    int i = 0;
-    for (int rangoy = posicion.x - mapa->distancia_ataque; rangoy <= posicion.x + mapa->distancia_ataque; rangoy++){
-        for (int rangox = posicion.y - mapa->distancia_ataque; rangox <= posicion.y + mapa->distancia_ataque; rangox++){
-            if (rangox >= 0 && rangoy >= 0 && rangox < mapa->ancho && rangoy < mapa->alto) { // chequeo de límites
-                if(mapa->casillas[rangox][rangoy] == CAMINO)
-                    i++;
-            }
+int count_caminos(int posicion_x, int posicion_y, Mapa *mapa){
+
+    int cantidad_caminos = 0;
+
+    for (int rango_x = -mapa->distancia_ataque; rango_x <= mapa->distancia_ataque; rango_x++) {
+        for (int rango_y = -mapa->distancia_ataque; rango_y <= mapa->distancia_ataque; rango_y++) {
+            int x = posicion_x + rango_x;
+            int y = posicion_y + rango_y;
+
+            // Verificar que la casilla esté dentro del mapa
+            if (x >= 0 && x < mapa->alto && y >= 0 && y < mapa->ancho && mapa->casillas[x][y] == CAMINO)
+                    cantidad_caminos++;
         }
     }
-    return i;
+    return cantidad_caminos;
 }
 
 void caminos_torre(Coordenada *validas, int cant_posiciones_validas, Mapa *mapa, Torre *torres_posibles){
     for (int i = 0; i < cant_posiciones_validas; i++){
         torres_posibles[i].posicion.x = validas[i].x;
         torres_posibles[i].posicion.y = validas[i].y;
-        torres_posibles[i].enemigos_golpeados = count_caminos(validas[i], mapa);
-    }
-}
-
-void swap(Torre *a, Torre *b) {
-    Torre temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-int particionar(Torre arr[], int bajo, int alto) {
-    int pivote = arr[alto].enemigos_golpeados; 
-    int i = bajo - 1;
-
-    for (int j = bajo; j < alto; j++) {
-        if (arr[j].enemigos_golpeados > pivote) { 
-            i++;
-            swap(&arr[i], &arr[j]);
-        }
-    }
-
-    swap(&arr[i + 1], &arr[alto]);
-    return i + 1;
-}
-
-void quicksort(Torre arr[], int bajo, int alto) {
-    if (bajo < alto) {
-        int pi = particionar(arr, bajo, alto);
-        quicksort(arr, bajo, pi - 1);
-        quicksort(arr, pi + 1, alto);
+        torres_posibles[i].enemigos_golpeados = count_caminos(validas[i].x, validas[i].y, mapa);
     }
 }
 
@@ -87,6 +62,33 @@ static int determinar_posicion_torre(int *casilla_elegida, int cant_validas) {
     return nueva_posicion;
 }
 
+void intercambiar(Torre *a, Torre *b) {
+    Torre temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int particionar(Torre torres[], int bajo, int alto) {
+    int pivote = torres[alto].enemigos_golpeados;
+    int i = bajo - 1;
+
+    for (int j = bajo; j < alto; j++) {
+        if (torres[j].enemigos_golpeados > pivote) {
+            i++;
+            intercambiar(&torres[i], &torres[j]);
+        }
+    }
+    intercambiar(&torres[i + 1], &torres[alto]);
+    return i + 1;
+}
+
+void quicksort(Torre torres[], int bajo, int alto) {
+    if (bajo < alto) {
+        int pi = particionar(torres, bajo, alto);
+        quicksort(torres, bajo, pi - 1);
+        quicksort(torres, pi + 1, alto);
+    }
+}
 
 void disponer(Nivel* nivel, Mapa* mapa) {
 
@@ -109,36 +111,26 @@ void disponer(Nivel* nivel, Mapa* mapa) {
 }
 
 void disponer_custom(Nivel* nivel, Mapa* mapa) {
-    
-    Torre *torres_posibles = malloc(sizeof(Torre) * cant_posiciones_validas);
-    
-    if (torres_posibles == NULL) {
-        fprintf(stderr, "Error de memoria\n");
-        return;
-    }
+
     int cantidad_casillas = mapa->alto * mapa->ancho;
-    
-    Coordenada validas[cantidad_casillas];
+    Coordenada casillas[cantidad_casillas];
 
-    int cant_posiciones_validas = posiciones_validas(validas, mapa->casillas, mapa->alto, mapa->ancho);;
+    //contamos las casillas que puedan tener una torre.
+    int cant_posiciones_validas = posiciones_validas(casillas, mapa->casillas, mapa->alto, mapa->ancho);;
 
-    caminos_torre(validas, cant_posiciones_validas, mapa, torres_posibles);
+    //arreglo con cordenadas de torre y daño de cada una
+    Torre torres[cant_posiciones_validas];
 
-    quicksort(torres_posibles, 0, cant_posiciones_validas - 1);
+    //compreto el arreglo con la informacion correcta
+    caminos_torre(casillas, cant_posiciones_validas, mapa, torres);
 
-    Torre *torres_mejores = malloc(sizeof(Torre) * mapa->cant_torres);
-    if (torres_mejores == NULL) {
-        fprintf(stderr, "Error de memoria\n");
-        free(torres_posibles);
-        return;
-    }
+    quicksort(torres, 0, cant_posiciones_validas - 1);
 
     for(int i = 0; i < mapa->cant_torres; i++){
-        torres_mejores[i] = torres_posibles[i];
+        int nueva_torre_x = torres[i].posicion.x;
+        int nueva_torre_y = torres[i].posicion.y;
+        colocar_torre(mapa, nueva_torre_x, nueva_torre_y, i);
     }
-
-    free(torres_posibles);
-    free(torres_mejores);
 }
 
 void disponer_con_backtracking(Nivel* nivel, Mapa* mapa) {
